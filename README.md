@@ -4,7 +4,7 @@ Play tic-tac-toe against a real minimax brain. Four difficulty levels from casua
 
 **Live demo: https://akash991833.github.io/tic-tac-toe-ai/**
 
-![Desktop](docs/screenshot-desktop.png)
+![Desktop](screenshots/desktop-light.png)
 
 ## Features
 
@@ -19,7 +19,7 @@ Play tic-tac-toe against a real minimax brain. Four difficulty levels from casua
 - **Dark and light mode**, remembering your choice and following your system preference by default.
 - **PWA**: installable, works fully offline after the first visit.
 
-![Mobile](docs/screenshot-mobile.png)
+![Mobile](screenshots/mobile-light.png)
 
 ## How the AI works
 

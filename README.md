@@ -10,6 +10,7 @@ Play tic-tac-toe against a real minimax brain. Four difficulty levels from casua
 
 - **Unbeatable Impossible mode** - full minimax search with alpha-beta pruning over the complete game tree. It can never lose; the best you can do is draw.
 - **4 difficulty levels** - Easy (random), Casual (55% best move), Hard (90% best move), Impossible (perfect play).
+- **Auto next round** - after a draw, a new game starts in 3 seconds with a visible countdown you can cancel. Scores and your last report card stay on screen.
 - **Move analysis** - after every game, each of your moves is graded Best / Good / Missed against perfect play, with the optimal cell named.
 - **Hints** - highlights the strongest move in any position.
 - **Undo** - takes back your last move and the AI's reply.

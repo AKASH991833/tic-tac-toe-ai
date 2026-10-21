@@ -93,7 +93,7 @@ function endGame(w){
   gameOver=true;
   const cells=$$('.cell');
   if(w.line){w.line.forEach(i=>cells[i].classList.add('win'));drawWinLine(w.line)}
-  if(w.who==='draw'){scores.draw++;setStatus('🤝 It\'s a draw. Well defended!');beep(300,.15,'sine');}
+  if(w.who==='draw'){scores.draw++;beep(300,.15,'sine');startDrawCountdown();}
   else if(w.who===human){scores.you++;setStatus('🎉 You win! That\'s rare against this brain.');beep(523,.1);setTimeout(()=>beep(659,.1),110);setTimeout(()=>beep(784,.2),220);}
   else{scores.ai++;setStatus('🤖 AI wins this one. Check your analysis to see where it slipped.');beep(220,.2,'sawtooth',0.04);}
   localStorage.setItem('ttt-scores',JSON.stringify(scores));
@@ -148,7 +148,21 @@ function forecast(b,next){
     const m=bestMove(b,turn).move;b[m]=turn;turn=turn==='X'?'O':'X';
   }
 }
+let drawTimer=null;
+function startDrawCountdown(){
+  let n=3;
+  const tick=()=>{
+    if(n<=0){newGame();return}
+    setStatus(`<span class="count-pill">Draw! New game in ${n}s <button id="cancelAuto" type="button">Stay here</button></span>`);
+    const cb=document.getElementById('cancelAuto');
+    if(cb)cb.addEventListener('click',()=>{clearInterval(drawTimer);drawTimer=null;setStatus('🤝 Draw. Scores saved - press New game when ready.')});
+    n--;
+  };
+  tick();
+  drawTimer=setInterval(tick,1000);
+}
 function newGame(){
+  if(drawTimer){clearInterval(drawTimer);drawTimer=null}
   board=Array(9).fill(null);history=[];gameOver=false;
   $('#analysis').innerHTML='<div class="note">Game in progress. Your report card appears when it ends.</div>';
   // alternate starter, human always X or O per choice

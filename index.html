@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Tic Tac Toe AI - Unbeatable Minimax Opponent</title>
+<meta name="description" content="Play tic-tac-toe against a real minimax AI. Four difficulty levels, hints, undo, move-by-move analysis and score tracking. Free, offline, no sign-up.">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="theme-color" content="#0f2145">
+<link rel="stylesheet" href="design.css">
+<style>
+.game-wrap{display:grid;grid-template-columns:minmax(0,420px) 1fr;gap:22px;align-items:start}
+@media(max-width:880px){.game-wrap{grid-template-columns:1fr}}
+.board-card{display:flex;flex-direction:column;align-items:center;gap:16px}
+.status-bar{min-height:52px;display:flex;align-items:center;justify-content:center;text-align:center;font-weight:700;font-size:1.05rem;letter-spacing:-.01em}
+.status-bar .turn-dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:8px;vertical-align:1px}
+.board{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:min(100%,360px);position:relative}
+.cell{aspect-ratio:1;border-radius:16px;border:1.5px solid var(--line-strong);background:var(--bg-soft);display:grid;place-items:center;font-size:clamp(2.4rem,10vw,3.4rem);font-weight:800;transition:transform .12s,border-color .15s,background .2s;position:relative;overflow:hidden}
+.cell:not(.taken):hover{border-color:var(--accent);background:var(--accent-soft);transform:scale(1.03)}
+.cell.taken{cursor:default}
+.cell .mark{display:inline-block;animation:pop .22s cubic-bezier(.2,1.4,.4,1)}
+.cell.x .mark{color:var(--accent-ink)}
+.cell.o .mark{color:#d97706}
+.cell.hint{box-shadow:0 0 0 3px var(--accent);animation:pulse 1s ease 2}
+.cell.win{background:color-mix(in srgb,var(--ok) 16%,var(--bg-card));border-color:var(--ok)}
+@keyframes pop{from{transform:scale(.2);opacity:0}to{transform:scale(1);opacity:1}}
+@keyframes pulse{50%{box-shadow:0 0 0 7px transparent}}
+.win-line{position:absolute;inset:0;pointer-events:none}
+.win-line line{stroke:var(--ok);stroke-width:7;stroke-linecap:round;stroke-dasharray:600;stroke-dashoffset:600;animation:draw .45s ease forwards}
+@keyframes draw{to{stroke-dashoffset:0}}
+.score-strip{display:flex;gap:10px;width:min(100%,360px)}
+.score-box{flex:1;text-align:center;background:var(--bg-soft);border:1px solid var(--line);border-radius:12px;padding:9px 4px}
+.score-box b{display:block;font-size:1.3rem;font-variant-numeric:tabular-nums}
+.score-box span{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-faint)}
+.score-box.you b{color:var(--accent-ink)}.score-box.ai b{color:#d97706}
+.level-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.analysis-list{display:flex;flex-direction:column;gap:8px;max-height:340px;overflow:auto;padding-right:4px}
+.ana-item{display:flex;gap:10px;align-items:flex-start;background:var(--bg-soft);border:1px solid var(--line);border-radius:10px;padding:9px 12px;font-size:.87rem}
+.ana-tag{flex:none;font-size:.68rem;font-weight:800;text-transform:uppercase;letter-spacing:.05em;padding:2.5px 8px;border-radius:99px;margin-top:1px}
+.ana-best{background:color-mix(in srgb,var(--ok) 15%,transparent);color:var(--ok)}
+.ana-good{background:color-mix(in srgb,var(--warn) 15%,transparent);color:var(--warn)}
+.ana-miss{background:color-mix(in srgb,var(--bad) 13%,transparent);color:var(--bad)}
+.kbd-hint{color:var(--ink-faint);font-size:.78rem;text-align:center}
+kbd{background:var(--bg-soft);border:1px solid var(--line-strong);border-bottom-width:2px;border-radius:6px;padding:1px 6px;font-size:.74rem;font-family:inherit}
+</style>
+</head>
+<body>
+<header class="app-header"><div class="header-inner">
+  <div class="brand"><span class="brand-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M9 4v16M15 4v16M4 9h16M4 15h16"/></svg></span>Tic Tac Toe AI</div>
+  <div class="header-spacer"></div>
+  <button class="icon-btn" id="soundBtn" title="Sound on/off" aria-label="Toggle sound"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M11 5 6 9H3v6h3l5 4V5z"/><path class="snd-waves" d="M15.5 8.5a5 5 0 0 1 0 7M18 6a8.5 8.5 0 0 1 0 12"/></svg></button>
+  <button class="icon-btn" onclick="toggleTheme()" title="Dark / light mode" aria-label="Toggle dark mode"><svg class="moon-i" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"/></svg><svg class="sun-i" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.4"/><path d="M12 2v2.4M12 19.6V22M4.9 4.9l1.7 1.7M17.4 17.4l1.7 1.7M2 12h2.4M19.6 12H22M4.9 19.1l1.7-1.7M17.4 6.6l1.7-1.7"/></svg></button>
+</div></header>
+<main class="app-main">
+  <div class="hero">
+    <h1>Play against a <span class="accent-word">real minimax brain</span></h1>
+    <p>Four difficulty levels, from casual to mathematically unbeatable. Ask for hints, undo moves, and get a move-by-move report card after every game. Everything runs offline in your browser.</p>
+  </div>
+  <div class="game-wrap">
+    <div class="card board-card">
+      <div class="level-row" role="group" aria-label="Difficulty">
+        <div class="seg" id="levelSeg">
+          <button data-level="0">Easy</button><button data-level="1">Casual</button><button data-level="2" class="on">Hard</button><button data-level="3">Impossible</button>
+        </div>
+      </div>
+      <div class="status-bar" id="status" aria-live="polite"></div>
+      <div class="board" id="board" role="grid" aria-label="Tic tac toe board"></div>
+      <div class="score-strip">
+        <div class="score-box you"><b id="scoreYou">0</b><span>You</span></div>
+        <div class="score-box"><b id="scoreDraw">0</b><span>Draws</span></div>
+        <div class="score-box ai"><b id="scoreAi">0</b><span>AI</span></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" id="newGameBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>New game</button>
+        <button class="btn btn-ghost" id="undoBtn">Undo</button>
+        <button class="btn btn-soft" id="hintBtn">Hint <span id="hintCount"></span></button>
+      </div>
+      <div class="kbd-hint">You play <b id="youAre">X</b> · <button class="chip" id="swapBtn" style="margin-left:4px">Switch sides</button> · <kbd>1</kbd>–<kbd>9</kbd> place a mark</div>
+    </div>
+    <div>
+      <div class="card">
+        <div class="card-title"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M3 3v18h18"/><path d="m7 14 4-4 3 3 5-6"/></svg>Move analysis</div>
+        <div class="card-sub">After each game, every one of your moves is graded against perfect play.</div>
+        <div style="height:12px"></div>
+        <div class="analysis-list" id="analysis"><div class="note">Finish a game to see your report card here. <b>Best</b> = strongest move, <b>Good</b> = keeps the same result, <b>Missed</b> = threw away a win or allowed a loss.</div></div>
+      </div>
+      <div class="card">
+        <div class="card-title"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 0 1 4.9.7c0 1.6-2.4 2-2.4 3.3M12 16.6v.1"/></svg>How the AI works</div>
+        <div style="height:8px"></div>
+        <p style="font-size:.9rem;color:var(--ink-soft)">Impossible uses full minimax search with alpha-beta pruning over all 255,168 possible games. It can never lose. Hard makes the best move 90% of the time, Casual 55%, Easy plays randomly. Analysis re-runs perfect play on every position you reached.</p>
+      </div>
+    </div>
+  </div>
+</main>
+<footer class="app-footer">Runs 100% offline · no account, no ads · <a href="https://github.com/AKASH991833/tic-tac-toe-ai" rel="noopener">Source on GitHub</a></footer>
+<script src="core.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
